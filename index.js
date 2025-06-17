@@ -13,28 +13,15 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 // MQTT Client - sesuai dengan konfigurasi Arduino
 const mqttOptions = {
-  host: process.env.MQTT_SERVER || '2919163bbc8f43aca4ac29f7167d2890.s1.eu.hivemq.cloud',
-  port: parseInt(process.env.MQTT_PORT) || 8883,
+  host: process.env.MQTT_SERVER,
+  port: process.env.MQTT_PORT,
   protocol: 'mqtts',
-  username: process.env.MQTT_USER || 'hivemq.webclient.1750189435021',
-  password: process.env.MQTT_PASS || '.cf7DdA#Rs8?2,Eh6JSb',
+  username: process.env.MQTT_USER,
+  password: process.env.MQTT_PASS,
   rejectUnauthorized: false
 };
 
-console.log('MQTT Config:', {
-  host: mqttOptions.host,
-  port: mqttOptions.port,
-  username: mqttOptions.username,
-  password: mqttOptions.password ? '[HIDDEN]' : 'NOT SET'
-});
-
-let mqttClient;
-try {
-  mqttClient = mqtt.connect(mqttOptions);
-} catch (error) {
-  console.error('Failed to create MQTT client:', error);
-  mqttClient = { connected: false, reconnecting: false }; // Mock object
-}
+const mqttClient = mqtt.connect(mqttOptions);
 
 // MQTT Topics - sesuai dengan Arduino
 const TOPIC_CONTROL = "iot/device/control";
@@ -316,14 +303,8 @@ app.post("/api/iot/riwayat", async (req, res) => {
 app.get("/api/health", (req, res) => {
   const status = {
     api: "running",
-    mqtt_connected: mqttClient ? mqttClient.connected : false,
-    mqtt_reconnecting: mqttClient ? mqttClient.reconnecting : false,
-    env_vars: {
-      mqtt_server: process.env.MQTT_SERVER ? 'SET' : 'NOT SET',
-      mqtt_port: process.env.MQTT_PORT ? 'SET' : 'NOT SET',
-      mqtt_user: process.env.MQTT_USER ? 'SET' : 'NOT SET',
-      mqtt_pass: process.env.MQTT_PASS ? 'SET' : 'NOT SET'
-    },
+    mqtt_connected: mqttClient.connected,
+    mqtt_reconnecting: mqttClient.reconnecting,
     timestamp: new Date().toISOString()
   };
   res.json(status);
