@@ -33,8 +33,23 @@ mqttClient.on('connect', () => {
   mqttClient.subscribe(TOPIC_STATUS, (err) => {
     if (!err) {
       console.log(`Subscribed to ${TOPIC_STATUS}`);
+    } else {
+      console.error('MQTT Subscribe error:', err);
     }
   });
+});
+
+// Error handling MQTT
+mqttClient.on('error', (error) => {
+  console.error('MQTT Connection error:', error);
+});
+
+mqttClient.on('offline', () => {
+  console.log('MQTT Client offline');
+});
+
+mqttClient.on('reconnect', () => {
+  console.log('MQTT Client reconnecting...');
 });
 
 // Handle pesan dari ESP32
@@ -282,6 +297,17 @@ app.post("/api/iot/riwayat", async (req, res) => {
     
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: "IoT riwayat saved" });
+});
+
+// Health check endpoint untuk MQTT status
+app.get("/api/health", (req, res) => {
+  const status = {
+    api: "running",
+    mqtt_connected: mqttClient.connected,
+    mqtt_reconnecting: mqttClient.reconnecting,
+    timestamp: new Date().toISOString()
+  };
+  res.json(status);
 });
 
 const PORT = process.env.PORT || 3000;
